@@ -17,28 +17,48 @@ from xpotato.models.trainer import GraphTrainer
 from xpotato.dataset.utils import save_dataframe
 
 
-def add_to_category(data_by_purity, majority_minority, category, train_val_test, pure, one_majority, post):
-    data_by_purity[majority_minority][category][train_val_test]["all"][post["post_id"]] = post
+def add_to_category(
+    data_by_purity,
+    majority_minority,
+    category,
+    train_val_test,
+    pure,
+    one_majority,
+    post,
+):
+    data_by_purity[majority_minority][category][train_val_test]["all"][
+        post["post_id"]
+    ] = post
     if pure:
-        data_by_purity[majority_minority][category][train_val_test]["pure"][post["post_id"]] = post
+        data_by_purity[majority_minority][category][train_val_test]["pure"][
+            post["post_id"]
+        ] = post
     if one_majority:
-        data_by_purity[majority_minority][category][train_val_test]["one_majority"][post["post_id"]] = post
+        data_by_purity[majority_minority][category][train_val_test]["one_majority"][
+            post["post_id"]
+        ] = post
 
 
 def train_val_test_dict_factory():
-    return {"train": {"all": {}, "one_majority": {}, "pure": {}},
-            "val": {"all": {}, "one_majority": {}, "pure": {}},
-            "test": {"all": {}, "one_majority": {}, "pure": {}}}
+    return {
+        "train": {"all": {}, "one_majority": {}, "pure": {}},
+        "val": {"all": {}, "one_majority": {}, "pure": {}},
+        "test": {"all": {}, "one_majority": {}, "pure": {}},
+    }
 
 
 def read_json(
-    file_path: str,
-    split_file: str,
-    graph_path: str = None
-) -> Tuple[List[Dict[str, List[Dict[str, List[str]]]]], Dict[str, Dict[str, Dict[str, Dict[str, Any]]]]]:
+    file_path: str, split_file: str, graph_path: str = None
+) -> Tuple[
+    List[Dict[str, List[Dict[str, List[str]]]]],
+    Dict[str, Dict[str, Dict[str, Dict[str, Any]]]],
+]:
     split_ids = json.load(open(split_file))
     data_by_target = []
-    data_by_purity = {"majority": defaultdict(train_val_test_dict_factory), "minority": defaultdict(train_val_test_dict_factory)}
+    data_by_purity = {
+        "majority": defaultdict(train_val_test_dict_factory),
+        "minority": defaultdict(train_val_test_dict_factory),
+    }
     with open(file_path) as dataset:
         data = json.load(dataset)
         for post in data.values():
@@ -104,12 +124,33 @@ def read_json(
                         "minority_labels": minority_targets,
                     }
                 )
-                train_val_test = "train" if post["post_id"] in split_ids["train"] else "val" if post["post_id"] in split_ids["val"] else "test"
+                train_val_test = (
+                    "train"
+                    if post["post_id"] in split_ids["train"]
+                    else "val"
+                    if post["post_id"] in split_ids["val"]
+                    else "test"
+                )
                 for target in majority_targets:
-                    add_to_category(data_by_purity, "majority", target.lower(), train_val_test, pure, one_majority, post)
+                    add_to_category(
+                        data_by_purity,
+                        "majority",
+                        target.lower(),
+                        train_val_test,
+                        pure,
+                        one_majority,
+                        post,
+                    )
                 for target in majority_targets + minority_targets:
-                    add_to_category(data_by_purity, "minority", target.lower(), train_val_test, pure, one_majority,
-                                    post)
+                    add_to_category(
+                        data_by_purity,
+                        "minority",
+                        target.lower(),
+                        train_val_test,
+                        pure,
+                        one_majority,
+                        post,
+                    )
     if graph_path is None:
         extractor = GraphExtractor(lang="en")
         graphs = list(
@@ -136,7 +177,12 @@ def save_in_original_format(data_by_purity, save_path):
                 os.makedirs(category_path)
             for tvt, purity in train_val_test.items():
                 for purity_name, data in purity.items():
-                    with open(os.path.join(category_path, f"{maj_min}_{tvt}_{purity_name}.json"), "w") as pure_file:
+                    with open(
+                        os.path.join(
+                            category_path, f"{maj_min}_{tvt}_{purity_name}.json"
+                        ),
+                        "w",
+                    ) as pure_file:
                         json.dump(data, pure_file)
 
 
@@ -174,7 +220,14 @@ def get_sentences(
                     literal_eval(example.rationales)[target.capitalize()],
                     # LT and GT appear only around user or censored as well as an emoji,
                     # but that will not influence this negatively
-                    sorted([node for node in literal_eval(example.graph)["nodes"] if node["name"] not in ["LT", "GT"]], key=lambda x: x["id"])[1:],
+                    sorted(
+                        [
+                            node
+                            for node in literal_eval(example.graph)["nodes"]
+                            if node["name"] not in ["LT", "GT"]
+                        ],
+                        key=lambda x: x["id"],
+                    )[1:],
                 )
                 if rat == 1
             ],
@@ -344,8 +397,11 @@ if __name__ == "__main__":
         help="Whether to create train features based on the POTATO graph.",
         action="store_true",
     )
-    argparser.add_argument("--graph_path", "-gp",
-                           help="Previously parsed graphs in the same data format as the distinct mode produces")
+    argparser.add_argument(
+        "--graph_path",
+        "-gp",
+        help="Previously parsed graphs in the same data format as the distinct mode produces",
+    )
     args = argparser.parse_args()
 
     if args.mode != "distinct" and args.target is None:
@@ -373,7 +429,9 @@ if __name__ == "__main__":
                 "If your file has a different name, please specify."
             )
         dir_path = os.path.dirname(dataset)
-        dt_by_target, dt_by_purity = read_json(dataset, split, graph_path=args.graph_path)
+        dt_by_target, dt_by_purity = read_json(
+            dataset, split, graph_path=args.graph_path
+        )
         save_in_original_format(dt_by_purity, os.path.join(dir_path, "original_format"))
         dataf = pd.DataFrame.from_records(dt_by_target)
         dataf.to_csv(os.path.join(dir_path, "dataset_02.tsv"), sep="\t", index=False)
