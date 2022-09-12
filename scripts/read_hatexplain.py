@@ -141,7 +141,27 @@ def read_json(
                         one_majority,
                         post,
                     )
+                for target in list(set(target_groups).difference(majority_targets)):
+                    add_to_category(
+                        data_by_purity,
+                        "majority",
+                        target.lower(),
+                        train_val_test,
+                        pure,
+                        one_majority,
+                        post,
+                    )
                 for target in majority_targets + minority_targets:
+                    add_to_category(
+                        data_by_purity,
+                        "minority",
+                        target.lower(),
+                        train_val_test,
+                        pure,
+                        one_majority,
+                        post,
+                    )
+                for target in list(set(target_groups).difference(majority_targets + minority_targets)):
                     add_to_category(
                         data_by_purity,
                         "minority",
