@@ -1,8 +1,11 @@
 from setuptools import find_packages, setup
 
+
+
+
 setup(
     name="xpotato",
-    version="0.1.3",
+    version="0.1.4",
     description="XAI human-in-the-loop information extraction framework",
     long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
@@ -24,8 +27,12 @@ setup(
         "streamlit == 1.3.1",
         "streamlit-aggrid == 0.2.3.post2",
         "scikit-criteria == 0.5",
-        "tuw-nlp == 0.0.8",
+        "tuw-nlp == 0.0.9",
         "amrlib == 0.6.0",
+        "protobuf==3.20.0",
+        "pytest >= 7.1.3",
+        "fastapi",
+        "uvicorn[standard]"
     ],
     packages=find_packages(),
     classifiers=[
